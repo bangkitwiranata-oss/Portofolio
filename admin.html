@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin — [Nama Lengkap]</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --paper: #F5F6F2; --paper-raised: #FFFFFF; --ink: #16232F; --ink-soft: #4A5A68;
+    --accent: #9C6B32; --accent-2: #3F6659; --rule: #D9D4C6; --rule-strong: #B9C2CB; --muted: #8B9199;
+    --danger: #B3432B;
+  }
+  :root:not([data-theme="light"]) {
+    @media (prefers-color-scheme: dark) {
+      --paper: #10161C; --paper-raised: #161E26; --ink: #ECEEEC; --ink-soft: #B7C1C8;
+      --accent: #CE9C5E; --accent-2: #6FA391; --rule: rgba(255,255,255,0.14); --rule-strong: rgba(255,255,255,0.24); --muted: #8FA0A8;
+      --danger: #E08469;
+    }
+  }
+  :root[data-theme="dark"] {
+    --paper: #10161C; --paper-raised: #161E26; --ink: #ECEEEC; --ink-soft: #B7C1C8;
+    --accent: #CE9C5E; --accent-2: #6FA391; --rule: rgba(255,255,255,0.14); --rule-strong: rgba(255,255,255,0.24); --muted: #8FA0A8;
+    --danger: #E08469;
+  }
+  * { box-sizing: border-box; }
+  body { margin:0; background:var(--paper); color:var(--ink); font-family:'IBM Plex Sans',sans-serif; line-height:1.5; }
+  h1,h2 { font-family:'Fraunces',serif; margin:0; }
+  .wrap { max-width: 760px; margin: 0 auto; padding: 40px 24px 100px; }
+  label { display:block; font-family:'IBM Plex Mono',monospace; font-size:0.75rem; color:var(--muted); margin-bottom:6px; }
+  input, textarea {
+    width:100%; padding:11px 12px; border:1px solid var(--rule-strong); border-radius:6px;
+    background: var(--paper-raised); color: var(--ink); font-family:'IBM Plex Sans',sans-serif; font-size:0.95rem;
+    margin-bottom:18px;
+  }
+  textarea { min-height: 160px; resize: vertical; }
+  button {
+    font-family:'IBM Plex Sans',sans-serif; font-weight:600; font-size:0.9rem;
+    padding: 11px 20px; border-radius: 6px; border: 1px solid transparent; cursor:pointer;
+  }
+  .btn-primary { background: var(--ink); color: var(--paper); }
+  .btn-primary:hover { opacity:0.9; }
+  .btn-ghost { background: transparent; border-color: var(--rule-strong); color: var(--ink); }
+  .btn-danger { background: transparent; border-color: var(--danger); color: var(--danger); font-size:0.8rem; padding:6px 12px; }
+
+  #login-view { max-width: 360px; margin: 12vh auto 0; }
+  #login-view h1 { font-size:1.5rem; margin-bottom:24px; }
+  #login-error { color: var(--danger); font-size:0.85rem; margin: -10px 0 16px; min-height: 1em; }
+
+  #app-view { display:none; }
+  .app-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:36px; flex-wrap:wrap; gap:12px; }
+  .app-header h1 { font-size: 1.6rem; }
+  .user-chip { font-family:'IBM Plex Mono',monospace; font-size:0.8rem; color:var(--muted); }
+
+  .card { background: var(--paper-raised); border:1px solid var(--rule); border-radius:10px; padding:24px; margin-bottom:32px; }
+  .card h2 { font-size:1.1rem; margin-bottom:18px; }
+  .row { display:flex; gap:12px; align-items:center; }
+  .checkbox-row { display:flex; align-items:center; gap:8px; margin: -8px 0 18px; }
+  .checkbox-row input { width:auto; margin:0; }
+  .checkbox-row label { margin:0; }
+
+  .post-row {
+    display:flex; justify-content:space-between; align-items:flex-start; gap:16px;
+    padding: 16px 0; border-top: 1px solid var(--rule);
+  }
+  .post-row:first-child { border-top:none; }
+  .post-row-title { font-weight:600; }
+  .post-row-meta { font-family:'IBM Plex Mono',monospace; font-size:0.75rem; color:var(--muted); margin-top:4px; }
+  .badge { font-family:'IBM Plex Mono',monospace; font-size:0.68rem; padding:2px 7px; border-radius:3px; border:1px solid var(--rule-strong); margin-left:8px; }
+  .badge-live { color: var(--accent-2); border-color: var(--accent-2); }
+  .row-actions { display:flex; gap:8px; flex-shrink:0; }
+  .row-actions button { padding:6px 12px; font-size:0.78rem; }
+
+  #status-msg { font-family:'IBM Plex Mono',monospace; font-size:0.8rem; color: var(--muted); margin-bottom:16px; min-height:1em; }
+  #config-warning { background: var(--paper-raised); border:1px solid var(--danger); color: var(--danger); padding:16px 20px; border-radius:8px; font-size:0.88rem; margin-bottom:24px; }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+
+  <div id="config-warning" style="display:none;">
+    CMS belum dikonfigurasi. Isi <code>SUPABASE_URL</code> dan <code>SUPABASE_ANON_KEY</code> di dalam file <code>admin.html</code> terlebih dahulu.
+  </div>
+
+  <div id="login-view">
+    <h1>Masuk ke Admin</h1>
+    <label for="login-email">Email</label>
+    <input id="login-email" type="email" autocomplete="username">
+    <label for="login-pass">Password</label>
+    <input id="login-pass" type="password" autocomplete="current-password">
+    <div id="login-error"></div>
+    <button class="btn-primary" id="btn-login" style="width:100%;">Masuk</button>
+  </div>
+
+  <div id="app-view">
+    <div class="app-header">
+      <h1>Kelola Tulisan</h1>
+      <div class="row">
+        <span class="user-chip" id="user-email"></span>
+        <button class="btn-ghost" id="btn-logout">Keluar</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2 id="form-title">Tulisan Baru</h2>
+      <input type="hidden" id="post-id">
+      <label for="f-title">Judul</label>
+      <input id="f-title" type="text" placeholder="Judul tulisan">
+      <label for="f-slug">Slug (untuk URL, otomatis dari judul — bisa diubah)</label>
+      <input id="f-slug" type="text" placeholder="judul-tulisan">
+      <label for="f-excerpt">Ringkasan singkat</label>
+      <input id="f-excerpt" type="text" placeholder="Satu-dua kalimat ringkasan">
+      <label for="f-content">Isi tulisan</label>
+      <textarea id="f-content" placeholder="Tulis isi lengkapnya di sini. Pisahkan paragraf dengan baris kosong."></textarea>
+      <div class="checkbox-row">
+        <input type="checkbox" id="f-published">
+        <label for="f-published" style="font-family:'IBM Plex Sans',sans-serif; font-size:0.9rem; color:var(--ink);">Publikasikan sekarang (tampil di halaman publik)</label>
+      </div>
+      <div id="status-msg"></div>
+      <div class="row">
+        <button class="btn-primary" id="btn-save">Simpan</button>
+        <button class="btn-ghost" id="btn-cancel-edit" style="display:none;">Batal edit</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Semua Tulisan</h2>
+      <div id="post-listing">
+        <p style="color:var(--muted); font-size:0.9rem;">Memuat…</p>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  // ====== KONFIGURASI ======
+  // Ganti dengan Project URL dan anon public key dari dashboard Supabase kamu
+  // (Project Settings -> API). Nilai ini AMAN untuk ditaruh di file publik
+  // karena akses tulis tetap dibatasi lewat Row Level Security + login.
+  const SUPABASE_URL = "https://tcdvtjqmnzqqetockauu.supabase.co";
+  const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRjZHZ0anFtbnpxcWV0b2NrYXV1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODk3MDE3NDIsImV4cCI6MjEwNTI3Nzc0Mn0.cOfVPKKrIqQcPbzvp2QYaWeNTBEITZsAdYxeeeglbI8";
+</script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+  const configured = SUPABASE_URL.startsWith('https://') && !SUPABASE_ANON_KEY.startsWith('[');
+  if (!configured) {
+    document.getElementById('config-warning').style.display = 'block';
+    document.getElementById('btn-login').disabled = true;
+  }
+  const client = configured ? supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY) : null;
+
+  const loginView = document.getElementById('login-view');
+  const appView = document.getElementById('app-view');
+  const statusMsg = document.getElementById('status-msg');
+
+  function slugify(str) {
+    return str.toLowerCase().trim()
+      .replace(/[^a-z0-9\s-]/g, '')
+      .replace(/\s+/g, '-')
+      .replace(/-+/g, '-');
+  }
+  document.getElementById('f-title').addEventListener('input', (e) => {
+    if (!document.getElementById('post-id').value) {
+      document.getElementById('f-slug').value = slugify(e.target.value);
+    }
+  });
+
+  async function checkSession() {
+    if (!client) return;
+    const { data: { session } } = await client.auth.getSession();
+    if (session) showApp(session);
+  }
+
+  function showApp(session) {
+    loginView.style.display = 'none';
+    appView.style.display = 'block';
+    document.getElementById('user-email').textContent = session.user.email;
+    loadPosts();
+  }
+
+  document.getElementById('btn-login').addEventListener('click', async () => {
+    const email = document.getElementById('login-email').value.trim();
+    const password = document.getElementById('login-pass').value;
+    const errEl = document.getElementById('login-error');
+    errEl.textContent = '';
+    const { data, error } = await client.auth.signInWithPassword({ email, password });
+    if (error) { errEl.textContent = 'Email atau password salah.'; return; }
+    showApp(data.session);
+  });
+
+  document.getElementById('btn-logout').addEventListener('click', async () => {
+    await client.auth.signOut();
+    location.reload();
+  });
+
+  function resetForm() {
+    document.getElementById('post-id').value = '';
+    document.getElementById('f-title').value = '';
+    document.getElementById('f-slug').value = '';
+    document.getElementById('f-excerpt').value = '';
+    document.getElementById('f-content').value = '';
+    document.getElementById('f-published').checked = false;
+    document.getElementById('form-title').textContent = 'Tulisan Baru';
+    document.getElementById('btn-cancel-edit').style.display = 'none';
+  }
+  document.getElementById('btn-cancel-edit').addEventListener('click', resetForm);
+
+  document.getElementById('btn-save').addEventListener('click', async () => {
+    const id = document.getElementById('post-id').value;
+    const payload = {
+      title: document.getElementById('f-title').value.trim(),
+      slug: document.getElementById('f-slug').value.trim(),
+      excerpt: document.getElementById('f-excerpt').value.trim(),
+      content: document.getElementById('f-content').value,
+      published: document.getElementById('f-published').checked,
+      updated_at: new Date().toISOString(),
+    };
+    if (!payload.title || !payload.slug) {
+      statusMsg.textContent = 'Judul dan slug wajib diisi.';
+      return;
+    }
+    statusMsg.textContent = 'Menyimpan…';
+    let error;
+    if (id) {
+      ({ error } = await client.from('posts').update(payload).eq('id', id));
+    } else {
+      ({ error } = await client.from('posts').insert(payload));
+    }
+    if (error) {
+      statusMsg.textContent = 'Gagal menyimpan: ' + error.message;
+      return;
+    }
+    statusMsg.textContent = 'Tersimpan.';
+    resetForm();
+    loadPosts();
+  });
+
+  async function loadPosts() {
+    const listEl = document.getElementById('post-listing');
+    const { data, error } = await client.from('posts').select('*').order('created_at', { ascending: false });
+    if (error) { listEl.innerHTML = '<p style="color:var(--danger);">Gagal memuat: ' + error.message + '</p>'; return; }
+    if (!data.length) { listEl.innerHTML = '<p style="color:var(--muted); font-size:0.9rem;">Belum ada tulisan.</p>'; return; }
+    listEl.innerHTML = '';
+    data.forEach(post => {
+      const row = document.createElement('div');
+      row.className = 'post-row';
+      row.innerHTML = `
+        <div>
+          <div class="post-row-title">${post.title}${post.published ? '<span class="badge badge-live">TAYANG</span>' : '<span class="badge">DRAFT</span>'}</div>
+          <div class="post-row-meta">/${post.slug}</div>
+        </div>
+        <div class="row-actions">
+          <button class="btn-ghost" data-action="edit">Edit</button>
+          <button class="btn-danger" data-action="delete">Hapus</button>
+        </div>`;
+      row.querySelector('[data-action="edit"]').addEventListener('click', () => {
+        document.getElementById('post-id').value = post.id;
+        document.getElementById('f-title').value = post.title;
+        document.getElementById('f-slug').value = post.slug;
+        document.getElementById('f-excerpt').value = post.excerpt || '';
+        document.getElementById('f-content').value = post.content || '';
+        document.getElementById('f-published').checked = post.published;
+        document.getElementById('form-title').textContent = 'Edit Tulisan';
+        document.getElementById('btn-cancel-edit').style.display = 'inline-block';
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      });
+      row.querySelector('[data-action="delete"]').addEventListener('click', async () => {
+        if (!confirm('Hapus tulisan "' + post.title + '"?')) return;
+        await client.from('posts').delete().eq('id', post.id);
+        loadPosts();
+      });
+      listEl.appendChild(row);
+    });
+  }
+
+  if (configured) checkSession();
+</script>
+</body>
+</html>

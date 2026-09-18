@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tulisan — [Nama Lengkap]</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --paper: #F5F6F2; --paper-raised: #FFFFFF; --ink: #16232F; --ink-soft: #4A5A68;
+    --accent: #9C6B32; --accent-2: #3F6659; --rule: #D9D4C6; --rule-strong: #B9C2CB; --muted: #8B9199;
+  }
+  :root:not([data-theme="light"]) {
+    @media (prefers-color-scheme: dark) {
+      --paper: #10161C; --paper-raised: #161E26; --ink: #ECEEEC; --ink-soft: #B7C1C8;
+      --accent: #CE9C5E; --accent-2: #6FA391; --rule: rgba(255,255,255,0.14); --rule-strong: rgba(255,255,255,0.24); --muted: #8FA0A8;
+    }
+  }
+  :root[data-theme="dark"] {
+    --paper: #10161C; --paper-raised: #161E26; --ink: #ECEEEC; --ink-soft: #B7C1C8;
+    --accent: #CE9C5E; --accent-2: #6FA391; --rule: rgba(255,255,255,0.14); --rule-strong: rgba(255,255,255,0.24); --muted: #8FA0A8;
+  }
+  * { box-sizing: border-box; }
+  body { margin:0; background:var(--paper); color:var(--ink); font-family:'IBM Plex Sans',sans-serif; line-height:1.7; }
+  h1 { font-family:'Fraunces',serif; }
+  .wrap { max-width: 720px; margin: 0 auto; padding: 0 28px; }
+  nav { border-bottom: 1px solid var(--rule); padding: 20px 0; }
+  .back { font-family:'IBM Plex Mono',monospace; font-size:0.85rem; color:var(--ink-soft); text-decoration:none; }
+  .back:hover { color: var(--accent); }
+  .post-header { padding: 56px 0 24px; }
+  .post-date { font-family:'IBM Plex Mono',monospace; font-size:0.82rem; color: var(--accent); margin-bottom: 14px; }
+  .post-header h1 { font-size: clamp(1.8rem, 4vw, 2.6rem); line-height:1.15; }
+  .post-body { padding: 24px 0 80px; font-size: 1.05rem; color: var(--ink-soft); }
+  .post-body p { margin: 0 0 20px; }
+  #status { padding: 80px 0; text-align:center; color: var(--muted); font-family:'IBM Plex Mono',monospace; font-size:0.9rem; }
+</style>
+</head>
+<body>
+<nav class="wrap"><a class="back" href="portofolio.html">← Kembali ke portofolio</a></nav>
+<div class="wrap">
+  <div id="status">Memuat tulisan…</div>
+  <div id="content" style="display:none;">
+    <div class="post-header">
+      <div class="post-date" id="p-date"></div>
+      <h1 id="p-title"></h1>
+    </div>
+    <div class="post-body" id="p-body"></div>
+  </div>
+</div>
+
+<script>
+  const SUPABASE_URL = "https://tcdvtjqmnzqqetockauu.supabase.co";
+  const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRjZHZ0anFtbnpxcWV0b2NrYXV1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODk3MDE3NDIsImV4cCI6MjEwNTI3Nzc0Mn0.cOfVPKKrIqQcPbzvp2QYaWeNTBEITZsAdYxeeeglbI8";
+</script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+  (async function loadPost() {
+    const statusEl = document.getElementById('status');
+    const params = new URLSearchParams(window.location.search);
+    const slug = params.get('slug');
+    if (!slug) { statusEl.textContent = 'Tulisan tidak ditemukan.'; return; }
+    if (!SUPABASE_URL.startsWith('https://') || SUPABASE_ANON_KEY.startsWith('[')) {
+      statusEl.textContent = 'CMS belum dikonfigurasi.';
+      return;
+    }
+    try {
+      const client = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+      const { data, error } = await client
+        .from('posts')
+        .select('title, content, created_at, published')
+        .eq('slug', slug)
+        .eq('published', true)
+        .single();
+      if (error || !data) { statusEl.textContent = 'Tulisan tidak ditemukan.'; return; }
+
+      const monthsId = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
+      const d = new Date(data.created_at);
+      document.getElementById('p-date').textContent = `${d.getDate()} ${monthsId[d.getMonth()]} ${d.getFullYear()}`;
+      document.getElementById('p-title').textContent = data.title;
+      const bodyEl = document.getElementById('p-body');
+      (data.content || '').split(/\n\s*\n/).forEach(par => {
+        const p = document.createElement('p');
+        p.textContent = par.trim();
+        bodyEl.appendChild(p);
+      });
+      document.title = data.title + ' — [Nama Lengkap]';
+      statusEl.style.display = 'none';
+      document.getElementById('content').style.display = 'block';
+    } catch (err) {
+      statusEl.textContent = 'Gagal memuat tulisan.';
+      console.error(err);
+    }
+  })();
+</script>
+</body>
+</html>
